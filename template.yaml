@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: REST chat API using Lambda, API Gateway, and DynamoDB
+
+Globals:
+  Function:
+    Runtime: python3.12
+    CodeUri: src/
+    Timeout: 10
+    MemorySize: 128
+    Environment:
+      Variables:
+        MESSAGES_TABLE: !Ref MessagesTable
+
+Resources:
+  ChatApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors: "'*'"
+
+  CreateMessageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.create_message
+      Policies:
+        - DynamoDBWritePolicy:
+            TableName: !Ref MessagesTable
+      Events:
+        CreateMessage:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ChatApi
+            Path: /messages
+            Method: post
+
+  ListMessagesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.list_messages
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref MessagesTable
+      Events:
+        ListMessages:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ChatApi
+            Path: /messages
+            Method: get
+
+  MessagesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: chatId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: chatId
+          KeyType: HASH
+        - AttributeName: createdAt
+          KeyType: RANGE
+      SSESpecification:
+        SSEEnabled: true
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint
+    Value: !Sub "https://${ChatApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+  MessagesTableName:
+    Description: DynamoDB table name
+    Value: !Ref MessagesTable
