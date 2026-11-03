@@ -18,6 +18,8 @@ The training script compares:
 
 The final 20% of observations are held out chronologically. Model-family selection uses cross-validation on the earlier training period; the holdout is reserved for final reporting. Metrics include MAE, RMSE, MAPE, and R². A model is not considered useful merely because it beats a constant or random baseline; compare it with the persistence baseline and interpret errors in the context of the stock's volatility.
 
+On this dataset's holdout period (December 2017–November 2020), the persistence baseline achieved an MAE of 23.80, compared with 30.58 for Random Forest and 31.74 for Ridge. Although Ridge had the lowest cross-validation MAE in the earlier training period and is saved as the final model, neither trained model beat the simple baseline on the holdout. The large errors reflect how difficult this series is to forecast from OHLC history alone.
+
 ## Run
 
 ```bash
@@ -30,4 +32,3 @@ The script writes `artifacts/metrics.json`, `artifacts/test_predictions.csv`, `a
 ## Dataset fields
 
 `Date`, `Open`, `High`, `Low`, and `Close` are monthly records. The source deck contains a mislabeled description for `Close`; this project treats it as the closing stock price, consistent with the column name and project objective.
-
